@@ -759,10 +759,37 @@ export const dbService = {
   // Developer / Settings helpers
   clearAllMockData: (): void => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("pg_mock_rooms");
-      localStorage.removeItem("pg_mock_tenants");
-      localStorage.removeItem("pg_mock_billing");
-      localStorage.removeItem("pg_mock_securityLogs");
+      localStorage.setItem("pg_mock_rooms", JSON.stringify([]));
+      localStorage.setItem("pg_mock_tenants", JSON.stringify([]));
+      localStorage.setItem("pg_mock_billing", JSON.stringify([]));
+      localStorage.setItem("pg_mock_securityLogs", JSON.stringify([]));
+    }
+  },
+
+  factoryResetAllData: async (): Promise<void> => {
+    // 1. If in Firebase mode, delete all docs from Firestore collections
+    if (isFirebaseMode()) {
+      try {
+        const collections = ["rooms", "tenants", "billing", "securityLogs"];
+        for (const colName of collections) {
+          const snap = await getDocs(collection(db, colName));
+          const deletePromises = snap.docs.map((docSnap) => deleteDoc(docSnap.ref));
+          await Promise.all(deletePromises);
+        }
+        console.log("Firestore collections wiped successfully.");
+      } catch (err) {
+        console.error("Error wiping Firestore collections:", err);
+        throw err;
+      }
+    }
+
+    // 2. Also wipe local storage keys explicitly to empty arrays [] so both modes have 0 data
+    if (typeof window !== "undefined") {
+      localStorage.setItem("pg_mock_rooms", JSON.stringify([]));
+      localStorage.setItem("pg_mock_tenants", JSON.stringify([]));
+      localStorage.setItem("pg_mock_billing", JSON.stringify([]));
+      localStorage.setItem("pg_mock_securityLogs", JSON.stringify([]));
     }
   }
 };
+

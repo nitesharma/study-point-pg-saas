@@ -149,6 +149,14 @@ export default function Home() {
     dbService.clearAllMockData();
   };
 
+  const handleFactoryReset = async () => {
+    await dbService.factoryResetAllData();
+    await refreshRooms();
+    await refreshTenants();
+    await refreshBilling();
+    await refreshLogs();
+  };
+
   const handleForceSeedFirestore = async () => {
     if (isFirebase) {
       await dbService.forceSeedFirestore(); // explicitly runs seed when clicked in settings
@@ -229,6 +237,7 @@ export default function Home() {
             onToggleDbMode={handleToggleDbMode}
             onResetMock={handleResetMock}
             onForceSeedFirestore={handleForceSeedFirestore}
+            onFactoryReset={handleFactoryReset}
           />
         );
       default:

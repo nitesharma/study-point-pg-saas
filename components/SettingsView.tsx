@@ -10,7 +10,9 @@ import {
   CloudCheck,
   CheckCircle,
   Copy,
-  Info
+  Info,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import { DEFAULT_FIREBASE_CONFIG } from "../lib/firebase";
 
@@ -19,9 +21,10 @@ interface SettingsViewProps {
   onToggleDbMode: (mode: "firebase" | "mock") => void;
   onResetMock: () => void;
   onForceSeedFirestore: () => Promise<void>;
+  onFactoryReset?: () => Promise<void>;
 }
 
-export default function SettingsView({ isFirebase, onToggleDbMode, onResetMock, onForceSeedFirestore }: SettingsViewProps) {
+export default function SettingsView({ isFirebase, onToggleDbMode, onResetMock, onForceSeedFirestore, onFactoryReset }: SettingsViewProps) {
   const [config, setConfig] = useState(DEFAULT_FIREBASE_CONFIG);
   const [copiedRule, setCopiedRule] = useState(false);
   const [seeding, setSeeding] = useState(false);
@@ -200,26 +203,46 @@ service cloud.firestore {
                     You are in Mock Mode. All edits are stored inside this browser's LocalStorage. To inspect live changes across devices or save persistently, enable the Live Firebase SDK mode.
                   </p>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (window.confirm("This will erase all tenants, rooms and logs created in Mock Mode and reset to the seed details. Proceed?")) {
-                      onResetMock();
-                      alert("Database sandbox wiped. Reloading...");
-                      window.location.reload();
-                    }
-                  }}
-                  className="px-4 py-2.5 bg-rose-500/15 hover:bg-rose-500 border border-rose-500/30 hover:border-rose-600 text-rose-450 hover:text-white rounded-xl text-xs font-semibold transition-all"
-                >
-                  Factory Reset Local Database
-                </button>
               </div>
             )}
           </div>
         </div>
 
+        {/* Danger Zone: Factory Reset (Universal across Firebase & Mock) */}
+        <div className="glass-card p-6 rounded-2xl lg:col-span-2 border border-rose-500/20 bg-rose-500/[0.02] space-y-4">
+          <div className="flex items-center gap-2 text-rose-400 border-b border-rose-500/20 pb-3">
+            <AlertTriangle className="w-5 h-5" />
+            <h3 className="text-base font-bold text-white">Danger Zone: Data Wipe & Factory Reset</h3>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Need a clean slate? This option will permanently erase <strong className="text-rose-300">ALL rooms, beds, tenants, rent/electricity bills, and security logs</strong> from your active database ({isFirebase ? "Live Firebase Firestore" : "Browser LocalStorage"}), setting the portal to zero data.
+          </p>
+          <div className="pt-2 flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              onClick={async () => {
+                if (window.confirm(`CRITICAL WARNING:\nYou are about to permanently DELETE all data (${isFirebase ? "Firestore collections" : "LocalStorage records"}) and factory reset the PG portal to zero data.\n\nAre you sure you want to proceed?`)) {
+                  try {
+                    await onFactoryReset?.();
+                    alert("Factory Reset Complete: All data has been wiped. Your database is now completely empty (zero records).");
+                  } catch (err) {
+                    alert("Error performing factory reset. Please verify your connection and permissions.");
+                  }
+                }
+              }}
+              className="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-rose-600/20"
+            >
+              <Trash2 className="w-4 h-4" />
+              Clear All Data (Factory Reset)
+            </button>
+            <span className="text-[11px] text-slate-500">
+              * This action cannot be undone once executed.
+            </span>
+          </div>
+        </div>
+
         {/* Security Rules & Schema info */}
+
         <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
           <div className="space-y-6">
             <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-2">
