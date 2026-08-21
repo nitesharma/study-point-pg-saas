@@ -28,6 +28,7 @@ interface TenantsViewProps {
   preselectedRoomId: string | null;
   preselectedBedId: string | null;
   onClearPreselect: () => void;
+  selectedPropertyId: string;
 }
 
 export default function TenantsView({ 
@@ -37,7 +38,8 @@ export default function TenantsView({
   onCheckout, 
   preselectedRoomId,
   preselectedBedId,
-  onClearPreselect 
+  onClearPreselect,
+  selectedPropertyId
 }: TenantsViewProps) {
   
   // Search & filter states
@@ -130,19 +132,16 @@ export default function TenantsView({
   // Proceed to next step in onboarding wizard
   const nextStep = () => {
     if (step === 1) {
-      // Validate personal details
       if (!name || !phone || !idProofNumber) {
         alert("Please fill in Name, Phone, and ID Proof number!");
         return;
       }
     } else if (step === 2) {
-      // Validate room allocation
       if (!roomId || !bedId) {
         alert("Please select a Room and Bed!");
         return;
       }
     } else if (step === 3) {
-      // Validate financial setup
       if (rentAmount <= 0) {
         alert("Rent amount must be greater than 0!");
         return;
@@ -159,6 +158,7 @@ export default function TenantsView({
   const handleOnboardSubmit = async () => {
     const newTenant: Tenant = {
       id: "tenant-" + Date.now(),
+      propertyId: selectedPropertyId,
       name,
       email,
       phone,
@@ -190,6 +190,11 @@ export default function TenantsView({
         setSelectedTenant(null);
       }
     }
+  };
+
+  const getRoomNumber = (rId: string) => {
+    const room = rooms.find(r => r.id === rId);
+    return room ? room.roomNumber : rId.split('_')[1] || rId;
   };
 
   return (
@@ -286,7 +291,7 @@ export default function TenantsView({
                     </td>
                     <td className="p-4">
                       <span className="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded font-bold text-[10px] uppercase">
-                        R{tenant.roomId} - {tenant.bedId.split("-")[1] || tenant.bedId}
+                        R{getRoomNumber(tenant.roomId)} - {tenant.bedId.split("-")[1] || tenant.bedId}
                       </span>
                     </td>
                     <td className="p-4 text-slate-400">{tenant.checkInDate}</td>
@@ -373,7 +378,7 @@ export default function TenantsView({
                 <div>
                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide block">Room Allocated</span>
                   <span className="text-xs font-extrabold text-indigo-400 uppercase">
-                    Room {selectedTenant.roomId} (Bed {selectedTenant.bedId.split("-")[1] || selectedTenant.bedId})
+                    Room {getRoomNumber(selectedTenant.roomId)} (Bed {selectedTenant.bedId.split("-")[1] || selectedTenant.bedId})
                   </span>
                 </div>
                 <div>
@@ -572,7 +577,7 @@ export default function TenantsView({
                     <Check className="w-5 h-5 text-indigo-400 shrink-0" />
                     <div className="text-xs">
                       <p className="font-bold text-white">Pre-allocated Bed Selected</p>
-                      <p className="text-slate-400">Room {preselectedRoomId} - Bed {preselectedBedId.split("-")[1]}</p>
+                      <p className="text-slate-400">Room {getRoomNumber(preselectedRoomId)} - Bed {preselectedBedId.split("-")[1]}</p>
                     </div>
                   </div>
                 ) : (
@@ -606,7 +611,7 @@ export default function TenantsView({
                               value={room.id}
                               disabled={availableCount === 0}
                             >
-                              Room {room.id} ({room.type}) - {availableCount} beds available
+                              Room {room.roomNumber} ({room.type}) - {availableCount} beds available
                             </option>
                           );
                         })}
@@ -688,7 +693,7 @@ export default function TenantsView({
                     <span className="text-slate-200 font-bold">{phone}</span>
 
                     <span className="text-slate-450 font-semibold">Allocated Location:</span>
-                    <span className="text-indigo-400 font-bold">Room {roomId} (Bed {bedId.split("-")[1]})</span>
+                    <span className="text-indigo-400 font-bold">Room {getRoomNumber(roomId)} (Bed {bedId.split("-")[1]})</span>
 
                     <span className="text-slate-450 font-semibold">Monthly Rent:</span>
                     <span className="text-emerald-400 font-extrabold">₹{rentAmount}</span>

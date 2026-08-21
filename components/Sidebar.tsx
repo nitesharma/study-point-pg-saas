@@ -11,49 +11,109 @@ import {
   Database,
   CloudLightning,
   LogOut,
-  UserCircle
+  Building2,
+  ChevronDown,
+  Archive,
+  AlertOctagon,
+  UserCog,
+  LineChart
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { Property } from "../lib/db";
 
 interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
   isFirebase: boolean;
+  properties: Property[];
+  selectedPropertyId: string | null;
+  onPropertyChange: (id: string) => void;
 }
 
-export default function Sidebar({ currentView, onViewChange, isFirebase }: SidebarProps) {
+export default function Sidebar({ 
+  currentView, 
+  onViewChange, 
+  isFirebase,
+  properties,
+  selectedPropertyId,
+  onPropertyChange
+}: SidebarProps) {
   const { user, logout } = useAuth();
+  
+  const activeProperty = properties.find(p => p.id === selectedPropertyId);
 
   const menuItems = [
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "rooms", label: "Rooms & Beds", icon: HomeIcon },
     { id: "tenants", label: "Tenants", icon: Users },
     { id: "billing", label: "Rent & Electricity", icon: Receipt },
+    { id: "fines", label: "Fines & Charges", icon: AlertOctagon },
+    { id: "staff", label: "Staff & HR", icon: UserCog },
+    { id: "finance", label: "Income & Expenses", icon: LineChart },
+    { id: "assets", label: "Assets & Inventory", icon: Archive },
     { id: "security", label: "Security & Complaints", icon: ShieldAlert },
+    { id: "properties", label: "Manage Properties", icon: Building2 },
     { id: "settings", label: "System Settings", icon: SettingsIcon },
   ];
 
   return (
     <aside className="w-64 glass-panel border-r border-slate-800 flex flex-col justify-between h-screen sticky top-0 shrink-0">
-      {/* Top Logo */}
-      <div className="p-6">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-violet-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
-            <CloudLightning className="w-6 h-6 text-white animate-pulse" />
+      {/* Top Logo & Property Selector */}
+      <div className="p-4 border-b border-slate-800/50">
+        {activeProperty ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3 px-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 to-indigo-500 p-[1px] shadow-lg shadow-indigo-500/30 shrink-0">
+                <div className="w-full h-full bg-[#121215] rounded-[11px] overflow-hidden flex items-center justify-center">
+                  {activeProperty.logoUrl ? (
+                    <img src={activeProperty.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <CloudLightning className="w-5 h-5 text-indigo-400" />
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="font-bold text-sm truncate text-white">
+                  {activeProperty.name}
+                </h1>
+                <span className="text-[10px] font-semibold text-indigo-400 tracking-wider uppercase truncate block">
+                  PG Management
+                </span>
+              </div>
+            </div>
+            
+            {properties.length > 1 && (
+              <div className="relative">
+                <select
+                  value={selectedPropertyId || ""}
+                  onChange={(e) => {
+                    onPropertyChange(e.target.value);
+                    if (currentView === "properties") onViewChange("dashboard");
+                  }}
+                  className="w-full appearance-none bg-slate-900/50 border border-slate-700/50 text-slate-300 text-xs rounded-lg pl-3 pr-8 py-2 focus:outline-none focus:border-indigo-500 transition-colors"
+                >
+                  {properties.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-500 absolute right-2.5 top-2 pointer-events-none" />
+              </div>
+            )}
           </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-              Serenity Stayz
-            </h1>
-            <span className="text-xs font-semibold text-indigo-400 tracking-wider uppercase">
-              PG Management
-            </span>
+        ) : (
+          <div className="flex items-center gap-3 p-2">
+            <div className="bg-slate-800 p-2.5 rounded-xl text-slate-500">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="font-bold text-sm text-slate-400">No Property</h1>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-4 space-y-1.5 py-4">
+      <nav className="flex-1 px-4 space-y-1.5 py-4 overflow-y-auto custom-scrollbar">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentView === item.id;
@@ -102,7 +162,7 @@ export default function Sidebar({ currentView, onViewChange, isFirebase }: Sideb
           </div>
           <p className="text-[10px] text-slate-500 leading-normal">
             {isFirebase 
-              ? "Syncing real-time updates to serenity-stayz Firestore." 
+              ? "Syncing real-time updates to Firestore." 
               : "Running in sandbox mode. Changes saved locally."}
           </p>
         </div>
@@ -136,4 +196,3 @@ export default function Sidebar({ currentView, onViewChange, isFirebase }: Sideb
     </aside>
   );
 }
-

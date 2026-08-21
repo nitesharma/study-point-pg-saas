@@ -22,9 +22,10 @@ interface SecurityViewProps {
   tenants: Tenant[];
   onAddLog: (log: SecurityLog) => Promise<void>;
   onUpdateLogStatus: (logId: string, status: "approved" | "resolved") => Promise<void>;
+  selectedPropertyId: string;
 }
 
-export default function SecurityView({ logs, tenants, onAddLog, onUpdateLogStatus }: SecurityViewProps) {
+export default function SecurityView({ logs, tenants, onAddLog, onUpdateLogStatus, selectedPropertyId }: SecurityViewProps) {
   const [activeTab, setActiveTab] = useState<"all" | "visitor" | "gate_pass" | "complaint">("all");
   const [showAddLogModal, setShowAddLogModal] = useState<"visitor" | "gate_pass" | "complaint" | null>(null);
   
@@ -65,6 +66,7 @@ export default function SecurityView({ logs, tenants, onAddLog, onUpdateLogStatu
 
     const newLog: SecurityLog = {
       id: "log-" + Date.now(),
+      propertyId: selectedPropertyId,
       type: showAddLogModal,
       tenantId: tenant ? tenant.id : null,
       tenantName: tenant ? tenant.name : null,
@@ -102,6 +104,11 @@ export default function SecurityView({ logs, tenants, onAddLog, onUpdateLogStatu
     
     return matchesTab && matchesSearch;
   });
+
+  const getRoomNumber = (rId: string | undefined | null) => {
+    if (!rId) return "N/A";
+    return rId.split('_')[1] || rId;
+  };
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -230,7 +237,7 @@ export default function SecurityView({ logs, tenants, onAddLog, onUpdateLogStatu
                   {log.tenantName ? (
                     <span className="text-indigo-400 font-bold flex items-center gap-1">
                       <Users className="w-3.5 h-3.5" />
-                      Tenant: {log.tenantName} (Room {tenants.find((t) => t.id === log.tenantId)?.roomId || "N/A"})
+                      Tenant: {log.tenantName} (Room {getRoomNumber(tenants.find((t) => t.id === log.tenantId)?.roomId)})
                     </span>
                   ) : (
                     <span className="text-slate-500 italic">No resident profile attached</span>
@@ -288,7 +295,7 @@ export default function SecurityView({ logs, tenants, onAddLog, onUpdateLogStatu
                   <option value="">-- Choose Resident --</option>
                   {activeTenants.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} (Room {t.roomId})
+                      {t.name} (Room {getRoomNumber(t.roomId)})
                     </option>
                   ))}
                 </select>

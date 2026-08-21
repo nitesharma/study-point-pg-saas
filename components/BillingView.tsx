@@ -13,18 +13,21 @@ import {
   User,
   ArrowRight,
   TrendingUp,
-  Download
+  Download,
+  MessageCircle
 } from "lucide-react";
 import { BillingRecord, Tenant } from "../lib/db";
+import { whatsappService } from "../lib/whatsapp";
 
 interface BillingViewProps {
   billing: BillingRecord[];
   tenants: Tenant[];
   onAddBilling: (billing: BillingRecord) => Promise<void>;
   onUpdateBillPayment: (billId: string, type: "rent" | "electricity" | "both", paidAmount: number, date: string) => Promise<void>;
+  selectedPropertyId: string;
 }
 
-export default function BillingView({ billing, tenants, onAddBilling, onUpdateBillPayment }: BillingViewProps) {
+export default function BillingView({ billing, tenants, onAddBilling, onUpdateBillPayment, selectedPropertyId }: BillingViewProps) {
   const [showCalcModal, setShowCalcModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState<BillingRecord | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<BillingRecord | null>(null);
@@ -106,6 +109,7 @@ export default function BillingView({ billing, tenants, onAddBilling, onUpdateBi
       // Create new bill
       const newBill: BillingRecord = {
         id: "bill-" + Date.now(),
+        propertyId: selectedPropertyId,
         tenantId: tenant.id,
         tenantName: tenant.name,
         roomId: tenant.roomId,
@@ -157,6 +161,32 @@ export default function BillingView({ billing, tenants, onAddBilling, onUpdateBi
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleSendWhatsApp = async (bill: BillingRecord) => {
+    const tenant = tenants.find(t => t.id === bill.tenantId);
+    if (!tenant) return;
+    
+    // In a real scenario, this would check if the bill is paid/unpaid and send appropriate template
+    const success = await whatsappService.sendMessage({
+      to: tenant.phone,
+      type: bill.rentStatus === "paid" && bill.electricityStatus === "paid" ? "receipt" : "rent_reminder",
+      parameters: {
+        tenantName: tenant.name,
+        month: bill.billingMonth,
+        amount: bill.totalAmount - bill.paidAmount,
+      }
+    });
+
+    if (success) {
+      alert("WhatsApp message sent successfully!");
+    } else {
+      alert("Failed to send WhatsApp message. See console for details.");
+    }
+  };
+
+  const getRoomNumber = (rId: string) => {
+    return rId.split('_')[1] || rId;
   };
 
   return (
@@ -214,7 +244,7 @@ export default function BillingView({ billing, tenants, onAddBilling, onUpdateBi
                         </div>
                         {bill.tenantName}
                       </td>
-                      <td className="p-4 text-slate-355 font-semibold">Room {bill.roomId}</td>
+                      <td className="p-4 text-slate-355 font-semibold">Room {getRoomNumber(bill.roomId)}</td>
                       <td className="p-4 text-slate-400 font-medium">
                         {new Date(bill.billingMonth + "-02").toLocaleDateString("en-US", {
                           month: "long",
@@ -320,7 +350,7 @@ export default function BillingView({ billing, tenants, onAddBilling, onUpdateBi
                   <option value="">-- Choose Tenant --</option>
                   {activeTenants.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} (Room {t.roomId})
+                      {t.name} (Room {getRoomNumber(t.roomId)})
                     </option>
                   ))}
                 </select>
@@ -535,7 +565,7 @@ export default function BillingView({ billing, tenants, onAddBilling, onUpdateBi
                 <div>
                   <p className="font-bold text-slate-500 uppercase tracking-wide">Billed To:</p>
                   <p className="font-extrabold text-slate-800 text-sm mt-0.5">{selectedInvoice.tenantName}</p>
-                  <p className="mt-0.5">Assigned Room: Room {selectedInvoice.roomId}</p>
+                  <p className="mt-0.5">Assigned Room: Room {getRoomNumber(selectedInvoice.roomId)}</p>
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-slate-500 uppercase tracking-wide">Bill Details:</p>
@@ -606,13 +636,20 @@ export default function BillingView({ billing, tenants, onAddBilling, onUpdateBi
             </div>
 
             {/* Print trigger on screen */}
-            <div className="flex gap-3 print:hidden">
+            <div className="flex gap-2 print:hidden flex-wrap sm:flex-nowrap">
               <button
                 onClick={handlePrint}
                 className="flex-1 py-2.5 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-indigo-600/25"
               >
                 <Printer className="w-4 h-4" />
-                Print Invoice Receipt
+                <span className="hidden sm:inline">Print Invoice</span>
+              </button>
+              <button
+                onClick={() => handleSendWhatsApp(selectedInvoice)}
+                className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/25"
+              >
+                <MessageCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Send via WhatsApp</span>
               </button>
               <button
                 onClick={() => setSelectedInvoice(null)}

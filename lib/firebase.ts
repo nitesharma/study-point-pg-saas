@@ -3,13 +3,13 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 export const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyDCJxiLMgleZqlIPHWsC8fDMvskgY5OXi8",
-  authDomain: "serenity-stayz.firebaseapp.com",
-  projectId: "serenity-stayz",
-  storageBucket: "serenity-stayz.firebasestorage.app",
-  messagingSenderId: "967966093412",
-  appId: "1:967966093412:web:ff9d2903c39149fd526f71",
-  measurementId: "G-WFW86SP7K7"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
 };
 
 // Check for custom config in localStorage (only in browser)

@@ -20,9 +20,10 @@ interface RoomsViewProps {
   onAddRoom: (room: Room) => Promise<void>;
   onUpdateRoom: (roomId: string, updatedRoom: Room) => Promise<void>;
   onOpenOnboard: (roomId: string, bedId: string) => void;
+  selectedPropertyId: string;
 }
 
-export default function RoomsView({ rooms, tenants, onAddRoom, onUpdateRoom, onOpenOnboard }: RoomsViewProps) {
+export default function RoomsView({ rooms, tenants, onAddRoom, onUpdateRoom, onOpenOnboard, selectedPropertyId }: RoomsViewProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newRoomId, setNewRoomId] = useState("");
   const [newRoomFloor, setNewRoomFloor] = useState(1);
@@ -49,9 +50,12 @@ export default function RoomsView({ rooms, tenants, onAddRoom, onUpdateRoom, onO
     e.preventDefault();
     if (!newRoomId.trim()) return;
 
-    // Check if room number already exists
-    if (rooms.some((r) => r.id === newRoomId.trim())) {
-      alert("Room number already exists!");
+    const formattedRoomNumber = newRoomId.trim();
+    const generatedId = `${selectedPropertyId}_${formattedRoomNumber}`;
+
+    // Check if room number already exists in this property
+    if (rooms.some((r) => r.id === generatedId)) {
+      alert("Room number already exists in this property!");
       return;
     }
 
@@ -64,7 +68,7 @@ export default function RoomsView({ rooms, tenants, onAddRoom, onUpdateRoom, onO
     const beds: Bed[] = Array.from({ length: bedCount }).map((_, index) => {
       const label = String.fromCharCode(65 + index); // A, B, C, D
       return {
-        id: `${newRoomId.trim()}-${label}`,
+        id: `${generatedId}-${label}`,
         name: `Bed ${label}`,
         status: "available",
         tenantId: null
@@ -72,7 +76,9 @@ export default function RoomsView({ rooms, tenants, onAddRoom, onUpdateRoom, onO
     });
 
     const room: Room = {
-      id: newRoomId.trim(),
+      id: generatedId,
+      propertyId: selectedPropertyId,
+      roomNumber: formattedRoomNumber,
       floor: newRoomFloor,
       type: newRoomType,
       rent: newRoomRent,
@@ -166,7 +172,7 @@ export default function RoomsView({ rooms, tenants, onAddRoom, onUpdateRoom, onO
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-lg font-extrabold text-white">Room {room.id}</span>
+                            <span className="text-lg font-extrabold text-white">Room {room.roomNumber}</span>
                             <span className="bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide">
                               {room.type}
                             </span>
@@ -239,7 +245,7 @@ export default function RoomsView({ rooms, tenants, onAddRoom, onUpdateRoom, onO
               <div className="flex justify-between items-start">
                 <h4 className="text-lg font-bold text-white flex items-center gap-2">
                   <Home className="w-5 h-5 text-indigo-400" />
-                  Room {selectedBedInfo.room.id} - {selectedBedInfo.bed.name}
+                  Room {selectedBedInfo.room.roomNumber} - {selectedBedInfo.bed.name}
                 </h4>
                 <button 
                   onClick={() => setSelectedBedInfo(null)}
