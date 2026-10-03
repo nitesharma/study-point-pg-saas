@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { whatsappService } from "../lib/whatsapp";
 
+import ModalOverlay from "./ui/ModalOverlay";
 interface FinesViewProps {
   fines: Fine[];
   tenants: Tenant[];
@@ -34,7 +35,7 @@ export default function FinesView({
   const [tenantId, setTenantId] = useState("");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
 
   // Sending State
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export default function FinesView({
     setTenantId("");
     setAmount("");
     setReason("");
-    setDate("");
+    setDate(new Date().toISOString().split("T")[0]);
   };
 
   const handleSendReminder = async (fine: Fine) => {
@@ -98,23 +99,23 @@ export default function FinesView({
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-rose-400 to-orange-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
             Fines & Charges
           </h2>
-          <p className="text-slate-400 text-sm mt-1">
+          <p className="text-slate-500 text-sm mt-1">
             Manage tenant penalties, late fees, and property damage charges.
           </p>
         </div>
 
         <div className="flex gap-4">
-          <div className="glass-card-no-hover px-5 py-3 rounded-xl border border-rose-500/20 bg-rose-500/5">
-            <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-0.5">Total Outstanding</p>
-            <p className="text-xl font-extrabold text-white">₹{totalUnpaid.toLocaleString()}</p>
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm px-5 py-3 rounded-xl border border-rose-200 bg-rose-500/5">
+            <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider mb-0.5 whitespace-nowrap">Total Outstanding</p>
+            <p className="text-xl font-extrabold text-slate-900">₹{totalUnpaid.toLocaleString()}</p>
           </div>
           
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center justify-center gap-2 px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-rose-600/20"
+            className="flex items-center justify-center gap-2 px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-rose-600/20 whitespace-nowrap shrink-0"
           >
             <Plus className="w-4 h-4" />
             Issue Fine
@@ -122,10 +123,10 @@ export default function FinesView({
         </div>
       </div>
 
-      <div className="glass-card border border-slate-800/60 rounded-2xl overflow-hidden">
+      <div className="bg-white border border-slate-200 shadow-sm rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="text-xs text-slate-400 uppercase bg-slate-900/50 border-b border-slate-800">
+          <table className="w-full text-left text-sm text-slate-700 [&_th]:whitespace-nowrap [&_td]:whitespace-nowrap">
+            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-6 py-4 font-semibold">Tenant</th>
                 <th className="px-6 py-4 font-semibold">Reason</th>
@@ -145,27 +146,27 @@ export default function FinesView({
                 </tr>
               ) : (
                 fines.map(fine => (
-                  <tr key={fine.id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={fine.id} className="hover:bg-slate-100/30 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-200">{fine.tenantName}</p>
+                      <p className="font-semibold text-slate-900">{fine.tenantName}</p>
                     </td>
-                    <td className="px-6 py-4 text-slate-300">{fine.reason}</td>
+                    <td className="px-6 py-4 text-slate-700">{fine.reason}</td>
                     <td className="px-6 py-4">
-                      <span className="font-semibold text-rose-400">₹{fine.amount}</span>
+                      <span className="font-semibold text-rose-600">₹{fine.amount}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-slate-400 text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-500 text-xs">
                         <Calendar className="w-3.5 h-3.5" />
                         {new Date(fine.date).toLocaleDateString()}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {fine.status === "paid" ? (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border bg-emerald-50 text-emerald-600 border-emerald-200 uppercase tracking-wider">
                           <CheckCircle className="w-3 h-3" /> Paid
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border bg-amber-500/10 text-amber-400 border-amber-500/20 uppercase tracking-wider">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded border bg-amber-50 text-amber-600 border-amber-200 uppercase tracking-wider">
                           <Clock className="w-3 h-3" /> Unpaid
                         </span>
                       )}
@@ -177,7 +178,7 @@ export default function FinesView({
                             <button
                               onClick={() => handleSendReminder(fine)}
                               disabled={sendingId === fine.id}
-                              className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
+                              className="p-2 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-500/20 transition-colors disabled:opacity-50"
                               title="Send WhatsApp Reminder"
                             >
                               <MessageCircle className="w-4 h-4" />
@@ -192,7 +193,7 @@ export default function FinesView({
                         ) : (
                           <button
                             onClick={() => onUpdateFineStatus(fine.id, "unpaid")}
-                            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                            className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
                           >
                             Mark Unpaid
                           </button>
@@ -208,23 +209,23 @@ export default function FinesView({
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <ModalOverlay tone="bg-slate-900/50" onClose={() => setShowModal(false)}>
           <form 
             onSubmit={handleAdd}
-            className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md animate-fade-in relative shadow-2xl"
+            className="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-md animate-fade-in relative shadow-xl"
           >
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <AlertOctagon className="w-5 h-5 text-rose-400" />
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <AlertOctagon className="w-5 h-5 text-rose-600" />
                   Issue Fine
                 </h3>
-                <p className="text-slate-400 text-xs mt-1">Record a penalty for a tenant.</p>
+                <p className="text-slate-500 text-xs mt-1">Record a penalty for a tenant.</p>
               </div>
               <button 
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="text-slate-500 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 ✕
               </button>
@@ -232,12 +233,12 @@ export default function FinesView({
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400">Select Tenant *</label>
+                <label className="text-xs font-bold text-slate-500">Select Tenant *</label>
                 <select
                   required
                   value={tenantId}
                   onChange={(e) => setTenantId(e.target.value)}
-                  className="w-full p-2.5 rounded-xl text-sm glass-input"
+                  className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                 >
                   <option value="">-- Choose Tenant --</option>
                   {tenants.filter(t => t.status === "active").map(t => (
@@ -247,47 +248,47 @@ export default function FinesView({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-400">Reason / Description *</label>
+                <label className="text-xs font-bold text-slate-500">Reason / Description *</label>
                 <input
                   required
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="e.g. Late fee, Property Damage, Noise Violation"
-                  className="w-full p-2.5 rounded-xl text-sm glass-input"
+                  className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Amount (₹) *</label>
+                  <label className="text-xs font-bold text-slate-500">Amount (₹) *</label>
                   <input
                     required
                     type="number"
                     min="1"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Date Issued *</label>
+                  <label className="text-xs font-bold text-slate-500">Date Issued *</label>
                   <input
                     required
                     type="date"
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-6 mt-6 border-t border-slate-800">
+            <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold transition-all ml-auto"
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-all ml-auto"
               >
                 Cancel
               </button>
@@ -299,7 +300,7 @@ export default function FinesView({
               </button>
             </div>
           </form>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );

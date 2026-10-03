@@ -1,548 +1,397 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Sidebar from "../components/Sidebar";
-import DashboardView from "../components/DashboardView";
-import RoomsView from "../components/RoomsView";
-import TenantsView from "../components/TenantsView";
-import BillingView from "../components/BillingView";
-import SecurityView from "../components/SecurityView";
-import SettingsView from "../components/SettingsView";
-import PropertySettingsView from "../components/PropertySettingsView";
-import AssetsView from "../components/AssetsView";
-import FinesView from "../components/FinesView";
-import StaffView from "../components/StaffView";
-import FinanceView from "../components/FinanceView";
-import { 
-  dbService, 
-  Room, 
-  Tenant, 
-  BillingRecord, 
-  SecurityLog, 
-  Property, 
-  Asset,
-  Fine,
-  Staff,
-  StaffAttendance,
-  StaffAdvance,
-  Expense
-} from "../lib/db";
-import { CloudLightning, Loader2, ShieldCheck, Building2 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import LoginView from "../components/LoginView";
-import TenantPortalView from "../components/TenantPortalView";
+import React, { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Search, Building2, X, Phone, MessageCircle, MapPin } from "lucide-react";
+import PublicHeader from "../components/catalogue/PublicHeader";
+import ListingCard from "../components/catalogue/ListingCard";
+import VacancyBoard from "../components/catalogue/VacancyBoard";
+import { dbService, PGListing } from "../lib/db";
+import {
+  AMENITIES,
+  BRAND_LOGO,
+  BRAND_NAME,
+  callLink,
+  startingPrice,
+  totalBedsAvailable,
+  whatsappLink,
+} from "../lib/catalogue";
 
-export default function Home() {
-  const { user, loading: authLoading } = useAuth();
-  const [currentView, setCurrentView] = useState("dashboard");
+const BUDGETS = [
+  { label: "Any budget", max: 0 },
+  { label: "Up to ₹5,000", max: 5000 },
+  { label: "Up to ₹8,000", max: 8000 },
+  { label: "Up to ₹12,000", max: 12000 },
+  { label: "Up to ₹20,000", max: 20000 },
+];
+
+const GENDERS = [
+  { id: "", label: "All" },
+  { id: "boys", label: "Boys" },
+  { id: "girls", label: "Girls" },
+  { id: "co-living", label: "Co-living" },
+];
+
+const QUICK_AMENITIES = ["ac", "wifi", "food", "housekeeping", "lift", "parking", "laundry", "power"];
+
+const STEPS = [
+  {
+    title: "Ask about a bed",
+    body: "Call, WhatsApp or send an enquiry from any PG page to ask which beds are open and the exact rent.",
+  },
+  {
+    title: "Visit and pick your bed",
+    body: "Walk through the rooms, check the food and washrooms, and choose the bed you want.",
+  },
+  {
+    title: "Pay the deposit, move in",
+    body: "Pay the security deposit and first month's rent to confirm your bed, then move in.",
+  },
+];
+
+const controlCls =
+  "h-10 px-3 rounded-lg text-sm bg-white border border-line text-ink focus:outline-none focus:border-ink focus:ring-2 focus:ring-ink/10";
+
+export default function HomePage() {
+  const [listings, setListings] = useState<PGListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isFirebase, setIsFirebase] = useState(true);
+  const [search, setSearch] = useState("");
+  const [city, setCity] = useState("");
+  const [gender, setGender] = useState("");
+  const [budget, setBudget] = useState(0);
+  const [amenities, setAmenities] = useState<string[]>([]);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
 
-  // Core Data States
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [billing, setBilling] = useState<BillingRecord[]>([]);
-  const [logs, setLogs] = useState<SecurityLog[]>([]);
-  const [assets, setAssets] = useState<Asset[]>([]);
-  
-  // Phase 4 States
-  const [fines, setFines] = useState<Fine[]>([]);
-  const [staff, setStaff] = useState<Staff[]>([]);
-  const [attendance, setAttendance] = useState<StaffAttendance[]>([]);
-  const [advances, setAdvances] = useState<StaffAdvance[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-
-  // Inter-view communication (Onboarding Preselection)
-  const [preselectedRoomId, setPreselectedRoomId] = useState<string | null>(null);
-  const [preselectedBedId, setPreselectedBedId] = useState<string | null>(null);
-
-  // 1. Initialize and load properties
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const mode = localStorage.getItem("pg_db_mode");
-      if (mode === null) {
-        localStorage.setItem("pg_db_mode", "firebase");
-        setIsFirebase(true);
-      } else {
-        setIsFirebase(mode === "firebase");
+    dbService.getPublishedListings().then((data) => {
+      setListings(data.sort((a, b) => a.title.localeCompare(b.title)));
+      setLoading(false);
+    });
+  }, []);
+
+  const cities = useMemo(
+    () => Array.from(new Set(listings.map((l) => l.city.trim()).filter(Boolean))).sort(),
+    [listings]
+  );
+  const localities = useMemo(
+    () => Array.from(new Set(listings.map((l) => (l.locality || "").trim()).filter(Boolean))).slice(0, 4),
+    [listings]
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return listings.filter((l) => {
+      if (q && ![l.title, l.locality, l.city, l.address].some((v) => v?.toLowerCase().includes(q))) return false;
+      if (city && l.city.trim() !== city) return false;
+      if (gender && l.gender !== gender) return false;
+      if (budget) {
+        const price = startingPrice(l);
+        if (!price || price > budget) return false;
       }
-    }
+      if (amenities.length && !amenities.every((a) => l.amenities.includes(a))) return false;
+      if (onlyAvailable && totalBedsAvailable(l) === 0) return false;
+      return true;
+    });
+  }, [listings, search, city, gender, budget, amenities, onlyAvailable]);
 
-    const initDb = async () => {
-      setLoading(true);
-      try {
-        await dbService.init();
-        const props = await dbService.getProperties();
-        setProperties(props);
-        
-        // Auto-select first property if none selected
-        if (props.length > 0 && !selectedPropertyId) {
-          setSelectedPropertyId(props[0].id);
-        } else if (props.length === 0) {
-          setCurrentView("properties"); // Force them to create a property
-        }
-      } catch (error) {
-        console.error("Error initializing DB: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const filtersActive = !!(search || city || gender || budget || amenities.length || onlyAvailable);
+  const contact = listings.find((l) => l.phone);
 
-    initDb();
-  }, [isFirebase]);
-
-  // 2. Load Active Property Data
-  useEffect(() => {
-    if (!selectedPropertyId) return;
-
-    const loadPropertyData = async () => {
-      setLoading(true);
-      try {
-        const rData = await dbService.getRooms(selectedPropertyId);
-        const tData = await dbService.getTenants(selectedPropertyId);
-        const bData = await dbService.getBilling(selectedPropertyId);
-        const lData = await dbService.getSecurityLogs(selectedPropertyId);
-        const aData = await dbService.getAssets(selectedPropertyId);
-        const fData = await dbService.getFines(selectedPropertyId);
-        const sData = await dbService.getStaff(selectedPropertyId);
-        const attData = await dbService.getStaffAttendance(selectedPropertyId);
-        const advData = await dbService.getStaffAdvances(selectedPropertyId);
-        const expData = await dbService.getExpenses(selectedPropertyId);
-
-        setRooms(rData);
-        setTenants(tData);
-        setBilling(bData);
-        setLogs(lData);
-        setAssets(aData);
-        setFines(fData);
-        setStaff(sData);
-        setAttendance(attData);
-        setAdvances(advData);
-        setExpenses(expData);
-      } catch (error) {
-        console.error("Error loading property data: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPropertyData();
-  }, [selectedPropertyId, isFirebase]);
-
-  // View Refresh Helpers
-  const refreshProperties = async () => {
-    const p = await dbService.getProperties();
-    setProperties(p);
-    if (p.length > 0 && !selectedPropertyId) {
-      setSelectedPropertyId(p[0].id);
-      setCurrentView("dashboard");
-    }
+  const clearFilters = () => {
+    setSearch("");
+    setCity("");
+    setGender("");
+    setBudget(0);
+    setAmenities([]);
+    setOnlyAvailable(false);
   };
 
-  const refreshRooms = async () => {
-    if(!selectedPropertyId) return;
-    setRooms(await dbService.getRooms(selectedPropertyId));
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    document.getElementById("pgs")?.scrollIntoView({ behavior: "smooth" });
   };
-
-  const refreshTenants = async () => {
-    if(!selectedPropertyId) return;
-    setTenants(await dbService.getTenants(selectedPropertyId));
-  };
-
-  const refreshBilling = async () => {
-    if(!selectedPropertyId) return;
-    setBilling(await dbService.getBilling(selectedPropertyId));
-  };
-
-  const refreshLogs = async () => {
-    if(!selectedPropertyId) return;
-    setLogs(await dbService.getSecurityLogs(selectedPropertyId));
-  };
-
-  const refreshAssets = async () => {
-    if(!selectedPropertyId) return;
-    setAssets(await dbService.getAssets(selectedPropertyId));
-  };
-
-  const refreshFines = async () => {
-    if(!selectedPropertyId) return;
-    setFines(await dbService.getFines(selectedPropertyId));
-  };
-
-  const refreshStaffData = async () => {
-    if(!selectedPropertyId) return;
-    setStaff(await dbService.getStaff(selectedPropertyId));
-    setAttendance(await dbService.getStaffAttendance(selectedPropertyId));
-    setAdvances(await dbService.getStaffAdvances(selectedPropertyId));
-  };
-
-  const refreshExpenses = async () => {
-    if(!selectedPropertyId) return;
-    setExpenses(await dbService.getExpenses(selectedPropertyId));
-  };
-
-  // CRUD handlers
-  const handleAddProperty = async (property: Property) => {
-    await dbService.addProperty(property);
-    await refreshProperties();
-    setSelectedPropertyId(property.id);
-    setCurrentView("dashboard");
-  };
-
-  const handleUpdateProperty = async (propertyId: string, updatedProperty: Property) => {
-    await dbService.updateProperty(propertyId, updatedProperty);
-    await refreshProperties();
-  };
-
-  const handleAddRoom = async (room: Room) => {
-    await dbService.addRoom(room);
-    await refreshRooms();
-  };
-
-  const handleUpdateRoom = async (roomId: string, updatedRoom: Room) => {
-    await dbService.updateRoom(roomId, updatedRoom);
-    await refreshRooms();
-  };
-
-  const handleOnboardTenant = async (tenant: Tenant) => {
-    await dbService.onboardTenant(tenant);
-    await refreshTenants();
-    await refreshRooms();
-  };
-
-  const handleCheckoutTenant = async (tenantId: string) => {
-    await dbService.checkoutTenant(tenantId);
-    await refreshTenants();
-    await refreshRooms();
-  };
-
-  const handleAddBilling = async (bill: BillingRecord) => {
-    await dbService.addBilling(bill);
-    await refreshBilling();
-  };
-
-  const handleUpdateBillPayment = async (
-    billId: string,
-    type: "rent" | "electricity" | "both",
-    paidAmount: number,
-    date: string
-  ) => {
-    await dbService.updateBillPaymentStatus(billId, type, paidAmount, date);
-    await refreshBilling();
-  };
-
-  const handleAddSecurityLog = async (log: SecurityLog) => {
-    await dbService.addSecurityLog(log);
-    await refreshLogs();
-  };
-
-  const handleUpdateLogStatus = async (logId: string, status: "approved" | "resolved") => {
-    await dbService.updateSecurityLogStatus(logId, status);
-    await refreshLogs();
-  };
-
-  const handleAddAsset = async (asset: Asset) => {
-    await dbService.addAsset(asset);
-    await refreshAssets();
-  };
-
-  const handleUpdateAsset = async (assetId: string, updatedAsset: Asset) => {
-    await dbService.updateAsset(assetId, updatedAsset);
-    await refreshAssets();
-  };
-
-  const handleDeleteAsset = async (assetId: string) => {
-    await dbService.deleteAsset(assetId);
-    await refreshAssets();
-  };
-
-  // Phase 4 Handlers
-  const handleAddFine = async (fine: Fine) => {
-    await dbService.addFine(fine);
-    await refreshFines();
-  };
-
-  const handleUpdateFineStatus = async (fineId: string, status: "paid" | "unpaid") => {
-    await dbService.updateFineStatus(fineId, status);
-    await refreshFines();
-  };
-
-  const handleAddStaff = async (newStaff: Staff) => {
-    await dbService.addStaff(newStaff);
-    await refreshStaffData();
-  };
-
-  const handleUpdateStaff = async (staffId: string, updatedStaff: Staff) => {
-    await dbService.updateStaff(staffId, updatedStaff);
-    await refreshStaffData();
-  };
-
-  const handleAddStaffAttendance = async (att: StaffAttendance) => {
-    await dbService.addStaffAttendance(att);
-    await refreshStaffData();
-  };
-
-  const handleAddStaffAdvance = async (adv: StaffAdvance) => {
-    await dbService.addStaffAdvance(adv);
-    await refreshStaffData();
-  };
-
-  const handleAddExpense = async (exp: Expense) => {
-    await dbService.addExpense(exp);
-    await refreshExpenses();
-  };
-
-  const handleToggleDbMode = (mode: "firebase" | "mock") => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("pg_db_mode", mode);
-      setIsFirebase(mode === "firebase");
-    }
-  };
-
-  const handleResetMock = () => {
-    dbService.clearAllMockData();
-    window.location.reload();
-  };
-
-  const handleFactoryReset = async () => {
-    await dbService.factoryResetAllData();
-    window.location.reload();
-  };
-
-  const handleForceSeedFirestore = async () => {
-    if (isFirebase) {
-      await dbService.forceSeedFirestore(); 
-      await refreshProperties();
-      await refreshRooms();
-      await refreshTenants();
-      await refreshBilling();
-      await refreshLogs();
-      await refreshAssets();
-      await refreshFines();
-      await refreshStaffData();
-      await refreshExpenses();
-    }
-  };
-
-  const handleTriggerOnboardFromRoom = (roomId: string, bedId: string) => {
-    setPreselectedRoomId(roomId);
-    setPreselectedBedId(bedId);
-    setCurrentView("tenants");
-  };
-
-  // Render view based on navigation state
-  const renderActiveView = () => {
-    if (properties.length === 0 && currentView !== "properties") {
-      return (
-        <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-            <Building2 className="w-8 h-8" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-white mb-2">No Properties Found</h2>
-            <p className="text-slate-400 text-sm mb-6">Create your first property to start managing your PG.</p>
-            <button 
-              onClick={() => setCurrentView("properties")}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
-            >
-              Create Property
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    switch (currentView) {
-      case "dashboard":
-        return (
-          <DashboardView
-            rooms={rooms}
-            tenants={tenants}
-            billing={billing}
-            logs={logs}
-            onViewChange={setCurrentView}
-          />
-        );
-      case "rooms":
-        return (
-          <RoomsView
-            rooms={rooms}
-            tenants={tenants}
-            onAddRoom={handleAddRoom}
-            onUpdateRoom={handleUpdateRoom}
-            onOpenOnboard={handleTriggerOnboardFromRoom}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "tenants":
-        return (
-          <TenantsView
-            tenants={tenants}
-            rooms={rooms}
-            onOnboard={handleOnboardTenant}
-            onCheckout={handleCheckoutTenant}
-            preselectedRoomId={preselectedRoomId}
-            preselectedBedId={preselectedBedId}
-            onClearPreselect={() => {
-              setPreselectedRoomId(null);
-              setPreselectedBedId(null);
-            }}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "billing":
-        return (
-          <BillingView
-            billing={billing}
-            tenants={tenants}
-            onAddBilling={handleAddBilling}
-            onUpdateBillPayment={handleUpdateBillPayment}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "security":
-        return (
-          <SecurityView
-            logs={logs}
-            tenants={tenants}
-            onAddLog={handleAddSecurityLog}
-            onUpdateLogStatus={handleUpdateLogStatus}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "assets":
-        return (
-          <AssetsView 
-            assets={assets}
-            rooms={rooms}
-            onAddAsset={handleAddAsset}
-            onUpdateAsset={handleUpdateAsset}
-            onDeleteAsset={handleDeleteAsset}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "fines":
-        return (
-          <FinesView
-            fines={fines}
-            tenants={tenants}
-            onAddFine={handleAddFine}
-            onUpdateFineStatus={handleUpdateFineStatus}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "staff":
-        return (
-          <StaffView
-            staff={staff}
-            attendance={attendance}
-            advances={advances}
-            onAddStaff={handleAddStaff}
-            onUpdateStaff={handleUpdateStaff}
-            onAddAttendance={handleAddStaffAttendance}
-            onAddAdvance={handleAddStaffAdvance}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "finance":
-        return (
-          <FinanceView
-            expenses={expenses}
-            billing={billing}
-            fines={fines}
-            onAddExpense={handleAddExpense}
-            selectedPropertyId={selectedPropertyId!}
-          />
-        );
-      case "properties":
-        return (
-          <PropertySettingsView 
-            properties={properties}
-            selectedPropertyId={selectedPropertyId}
-            onAddProperty={handleAddProperty}
-            onUpdateProperty={handleUpdateProperty}
-            user={user}
-          />
-        );
-      case "settings":
-        return (
-          <SettingsView
-            isFirebase={isFirebase}
-            onToggleDbMode={handleToggleDbMode}
-            onResetMock={handleResetMock}
-            onForceSeedFirestore={handleForceSeedFirestore}
-            onFactoryReset={handleFactoryReset}
-          />
-        );
-      default:
-        return <div className="text-white text-sm">View not found.</div>;
-    }
-  };
-
-  // Auth Guard
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0d0d0f] text-zinc-100 flex flex-col items-center justify-center p-4">
-        <div className="flex flex-col items-center justify-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 p-0.5 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <div className="w-full h-full bg-[#121215] rounded-[14px] flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
-            </div>
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-bold text-slate-200">Verifying secure session...</p>
-            <p className="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Checking PG Manager credentials</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return <LoginView />;
-  }
-
-  const isTenant = user.providerData.some((p: any) => p.providerId === "phone");
-
-  if (isTenant) {
-    return <TenantPortalView user={user} />;
-  }
 
   return (
-    <div className="flex min-h-screen bg-[#0f172a] text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* Background Orbs */}
-      <div className="glow-orb-purple top-10 left-10"></div>
-      <div className="glow-orb-green bottom-20 right-20"></div>
+    <div className="min-h-screen bg-chalk text-ink">
+      <PublicHeader />
 
-      {/* Sidebar Navigation */}
-      <Sidebar
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        isFirebase={isFirebase}
-        properties={properties}
-        selectedPropertyId={selectedPropertyId}
-        onPropertyChange={setSelectedPropertyId}
-      />
+      {/* Hero */}
+      <section className="relative overflow-hidden border-b border-line">
+        <div
+          className="absolute inset-0 opacity-[0.35] pointer-events-none"
+          style={{
+            backgroundImage: "linear-gradient(#e3e6ee 1px, transparent 1px)",
+            backgroundSize: "100% 32px",
+          }}
+          aria-hidden
+        />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20 grid lg:grid-cols-[1.1fr_1fr] gap-10 lg:gap-14 items-center">
+          <div className="animate-fade-in">
+            <p className="text-sm font-medium text-muted flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-marigold" />
+              {cities.length ? `Student PGs in ${cities.join(", ")}` : "Student PGs & hostels"}
+            </p>
+            <h1 className="font-display mt-4 text-[2.6rem] leading-[1.02] sm:text-6xl lg:text-[4.25rem] font-extrabold tracking-[-0.03em] text-ink">
+              Find a <span className="highlight">vacant bed</span> near your classes. Move in this week.
+            </h1>
+            <p className="mt-5 text-base sm:text-lg text-muted max-w-xl leading-relaxed">
+              Real photos, monthly rent and today&apos;s bed count for every {BRAND_NAME} PG. Call or WhatsApp the
+              PG directly and visit before you pay.
+            </p>
 
-      {/* Main View Area */}
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto max-w-7xl mx-auto w-full z-10">
-        {loading ? (
-          <div className="flex flex-col items-center justify-center h-[70vh] gap-4">
-            <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-            <div className="text-center">
-              <p className="text-sm font-bold text-slate-200">Connecting to Backend...</p>
-              <p className="text-xs text-slate-500 mt-1">Syncing with Firestore</p>
-            </div>
+            <form onSubmit={submitSearch} className="mt-8 flex flex-col sm:flex-row gap-2 max-w-xl">
+              <label className="relative flex-1">
+                <span className="sr-only">Search by area, PG name or city</span>
+                <Search className="w-5 h-5 text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Area, PG name or city"
+                  className="w-full h-14 pl-12 pr-4 rounded-xl bg-white border border-line shadow-sm text-base text-ink placeholder:text-muted/70 focus:outline-none focus:border-ink focus:ring-4 focus:ring-ink/10"
+                />
+              </label>
+              <button
+                type="submit"
+                className="h-14 px-7 rounded-xl bg-ink hover:bg-ink-soft text-white font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Find a bed
+              </button>
+            </form>
+
+            {localities.length > 0 && (
+              <p className="mt-4 text-sm text-muted flex flex-wrap items-center gap-x-2 gap-y-1">
+                Popular:
+                {localities.map((loc) => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => {
+                      setSearch(loc);
+                      document.getElementById("pgs")?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="font-medium text-ink underline decoration-line decoration-2 underline-offset-4 hover:decoration-marigold"
+                  >
+                    {loc}
+                  </button>
+                ))}
+              </p>
+            )}
           </div>
-        ) : (
-          renderActiveView()
-        )}
-      </main>
+
+          <VacancyBoard listings={listings} loading={loading} />
+        </div>
+      </section>
+
+      {/* Listings */}
+      <section id="pgs" className="scroll-mt-16 max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Our PGs</h2>
+            <p className="text-muted mt-2">
+              {loading
+                ? "Loading PGs…"
+                : filtersActive
+                ? `${filtered.length} of ${listings.length} PG${listings.length === 1 ? "" : "s"} match`
+                : `${listings.length} PG${listings.length === 1 ? "" : "s"}, sorted A–Z`}
+            </p>
+          </div>
+          {filtersActive && (
+            <button
+              onClick={clearFilters}
+              className="self-start md:self-auto inline-flex items-center gap-1 text-sm font-semibold text-ink hover:underline"
+            >
+              <X className="w-4 h-4" /> Clear filters
+            </button>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className="mt-6 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div role="radiogroup" aria-label="PG for" className="inline-flex p-1 rounded-lg bg-white border border-line">
+              {GENDERS.map((g) => (
+                <button
+                  key={g.id}
+                  role="radio"
+                  aria-checked={gender === g.id}
+                  onClick={() => setGender(g.id)}
+                  className={`px-3 h-8 rounded-md text-sm font-medium transition-colors ${
+                    gender === g.id ? "bg-ink text-white" : "text-muted hover:text-ink"
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            {cities.length > 1 && (
+              <select aria-label="City" className={controlCls} value={city} onChange={(e) => setCity(e.target.value)}>
+                <option value="">All cities</option>
+                {cities.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            )}
+            <select
+              aria-label="Budget"
+              className={controlCls}
+              value={budget}
+              onChange={(e) => setBudget(Number(e.target.value))}
+            >
+              {BUDGETS.map((b) => (
+                <option key={b.max} value={b.max}>
+                  {b.label}
+                </option>
+              ))}
+            </select>
+            <label className={`${controlCls} inline-flex items-center gap-2 cursor-pointer select-none`}>
+              <input
+                type="checkbox"
+                checked={onlyAvailable}
+                onChange={(e) => setOnlyAvailable(e.target.checked)}
+                className="w-4 h-4 accent-[#1f9d55]"
+              />
+              Beds open now
+            </label>
+          </div>
+          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+            {QUICK_AMENITIES.map((id) => {
+              const a = AMENITIES.find((x) => x.id === id)!;
+              const active = amenities.includes(id);
+              return (
+                <button
+                  key={id}
+                  aria-pressed={active}
+                  onClick={() => setAmenities((prev) => (active ? prev.filter((x) => x !== id) : [...prev, id]))}
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-3 h-8 rounded-full border text-xs font-medium transition-colors ${
+                    active
+                      ? "bg-marigold/20 border-marigold text-ink"
+                      : "bg-white border-line text-muted hover:text-ink hover:border-ink/30"
+                  }`}
+                >
+                  <a.icon className="w-3.5 h-3.5" /> {a.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-8">
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-white border border-line rounded-2xl overflow-hidden">
+                  <div className="aspect-[4/3] bg-line/60 animate-pulse" />
+                  <div className="p-5 space-y-3">
+                    <div className="h-5 w-2/3 rounded bg-line/80 animate-pulse" />
+                    <div className="h-4 w-1/3 rounded bg-line/60 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="bg-white border border-dashed border-line rounded-2xl py-16 px-4 text-center">
+              <Building2 className="w-10 h-10 text-muted/50 mx-auto mb-3" />
+              {listings.length === 0 ? (
+                <>
+                  <p className="font-display text-lg font-semibold">No PGs listed yet</p>
+                  <p className="text-sm text-muted mt-1">Check back soon, or call us to ask about vacancies.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-display text-lg font-semibold">No PG matches these filters</p>
+                  <p className="text-sm text-muted mt-1">Remove a filter or try a nearby area.</p>
+                  <button
+                    onClick={clearFilters}
+                    className="mt-5 px-4 h-10 rounded-lg bg-ink text-white text-sm font-semibold hover:bg-ink-soft"
+                  >
+                    Clear filters
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filtered.map((l) => (
+                <ListingCard key={l.id} listing={l} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* How booking works */}
+      <section id="booking" className="scroll-mt-16 border-y border-line bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20 grid lg:grid-cols-[1fr_2fr] gap-10">
+          <div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">How booking works</h2>
+            <p className="text-muted mt-3 max-w-sm">Three steps from first message to moving in. You see the room before you pay anything.</p>
+          </div>
+          <ol className="grid sm:grid-cols-3 gap-6 sm:gap-4">
+            {STEPS.map((s, i) => (
+              <li key={s.title} className="relative pt-6 border-t-2 border-ink">
+                <span className="font-board text-sm font-bold text-marigold">Step {i + 1}</span>
+                <h3 className="font-display text-xl font-semibold mt-1">{s.title}</h3>
+                <p className="text-sm text-muted mt-2 leading-relaxed">{s.body}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* Contact */}
+      <section id="contact" className="scroll-mt-16 max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
+        <div className="bg-ink text-white rounded-3xl px-6 py-10 sm:px-12 sm:py-14 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          <div className="max-w-xl">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight">Questions before you visit?</h2>
+            <p className="text-white/70 mt-3">
+              Ask about food, timings, deposits or a bed for a friend. Message or call us directly.
+            </p>
+          </div>
+          {contact ? (
+            <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+              <a
+                href={whatsappLink(contact.whatsapp || contact.phone, `Hi, I'm looking for a PG with ${BRAND_NAME}.`)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-leaf hover:bg-[#188a4a] font-semibold whitespace-nowrap"
+              >
+                <MessageCircle className="w-5 h-5" /> WhatsApp us
+              </a>
+              <a
+                href={callLink(contact.phone)}
+                className="inline-flex items-center justify-center gap-2 h-12 px-6 rounded-xl bg-white text-ink hover:bg-chalk font-semibold whitespace-nowrap"
+              >
+                <Phone className="w-5 h-5" /> Call {contact.phone}
+              </a>
+            </div>
+          ) : (
+            <a
+              href="#pgs"
+              className="inline-flex items-center justify-center h-12 px-6 rounded-xl bg-white text-ink font-semibold"
+            >
+              Browse PGs
+            </a>
+          )}
+        </div>
+      </section>
+
+      <footer className="border-t border-line">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted">
+          <div className="flex items-center gap-2.5">
+            <img src={BRAND_LOGO} alt="" className="w-7 h-7 rounded-lg object-cover border border-line bg-white" />
+            <span>
+              © {new Date().getFullYear()} {BRAND_NAME}
+            </span>
+          </div>
+          <div className="flex items-center gap-5">
+            <a href="#pgs" className="hover:text-ink">PGs</a>
+            <a href="#booking" className="hover:text-ink">How booking works</a>
+            <Link href="/admin" className="hover:text-ink">Owner & tenant login</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
