@@ -173,35 +173,33 @@ export default function LoginView() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0d0f] text-zinc-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Decorative Gradient Orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDelay: "2s" }} />
+      
+      
 
       <div className="w-full max-w-md z-10">
         {/* Brand Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-indigo-500/20 mb-4">
-            <div className="w-full h-full bg-[#121215] rounded-[14px] flex items-center justify-center">
-              <Building2 className="w-8 h-8 text-indigo-400" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
-            Serenity Stayz
+          <a href="/" aria-label="Back to home" className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-slate-200 shadow-sm mb-4 overflow-hidden">
+            <img src="/images/logo.jpeg" alt="" className="w-full h-full object-cover" />
+          </a>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Study Point Group
           </h1>
-          <p className="text-sm text-zinc-400 mt-1 flex items-center justify-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <p className="text-sm text-slate-500 mt-1 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Secure PG Management Portal</span>
           </p>
         </div>
 
         {/* Tab Selection */}
-        <div className="flex bg-black/50 p-1 rounded-2xl mb-6 border border-white/10">
+        <div className="flex bg-white border border-slate-200 shadow-sm p-1 rounded-2xl mb-6 border border-slate-200">
           <button
             className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
               activeTab === "admin" 
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" 
-                : "text-zinc-400 hover:text-white"
+                ? "bg-indigo-600 text-white shadow-sm" 
+                : "text-slate-500 hover:text-slate-700"
             }`}
             onClick={() => setActiveTab("admin")}
           >
@@ -210,8 +208,8 @@ export default function LoginView() {
           <button
             className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${
               activeTab === "tenant" 
-                ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20" 
-                : "text-zinc-400 hover:text-white"
+                ? "bg-purple-600 text-white shadow-sm" 
+                : "text-slate-500 hover:text-slate-700"
             }`}
             onClick={() => setActiveTab("tenant")}
           >
@@ -220,10 +218,10 @@ export default function LoginView() {
         </div>
 
         {/* Auth Card */}
-        <div className="bg-[#18181b]/80 backdrop-blur-2xl border border-white/10 rounded-3xl p-8 shadow-2xl transition-all duration-300">
+        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-xl font-semibold text-slate-900">
                 {activeTab === "tenant"
                   ? "Tenant Login"
                   : isForgotPassword 
@@ -232,7 +230,7 @@ export default function LoginView() {
                   ? "Create Admin Account" 
                   : "Welcome Back"}
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 {activeTab === "tenant"
                   ? "Sign in using your registered phone number"
                   : isForgotPassword
@@ -243,28 +241,28 @@ export default function LoginView() {
               </p>
             </div>
             {activeTab === "admin" && !isForgotPassword && (
-              <div className="p-2.5 rounded-2xl bg-white/5 border border-white/5 text-zinc-400">
-                <Key className="w-5 h-5 text-indigo-400" />
+              <div className="p-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-500">
+                <Key className="w-5 h-5 text-indigo-600" />
               </div>
             )}
             {activeTab === "tenant" && (
-              <div className="p-2.5 rounded-2xl bg-white/5 border border-white/5 text-zinc-400">
-                <Phone className="w-5 h-5 text-purple-400" />
+              <div className="p-2.5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-500">
+                <Phone className="w-5 h-5 text-purple-600" />
               </div>
             )}
           </div>
 
           {/* Status Alerts */}
           {error && (
-            <div className="mb-6 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3 text-sm text-rose-300 animate-fadeIn">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="mb-6 p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-3 text-sm text-rose-700 animate-fade-in">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mb-6 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-3 text-sm text-emerald-300 animate-fadeIn">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="mb-6 p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-3 text-sm text-emerald-700 animate-fade-in">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <span>{success}</span>
             </div>
           )}
@@ -274,31 +272,31 @@ export default function LoginView() {
             <form onSubmit={handleAdminSubmit} className="space-y-4">
               {isSignup && !isForgotPassword && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-300">Full Name</label>
+                  <label className="text-xs font-medium text-slate-600">Full Name</label>
                   <div className="relative">
-                    <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Abhishek Singh"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-zinc-300">Email Address</label>
+                <label className="text-xs font-medium text-slate-600">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@serenitystayz.com"
-                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                    placeholder="you@example.com"
+                    className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
               </div>
@@ -306,7 +304,7 @@ export default function LoginView() {
               {!isForgotPassword && (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-zinc-300">Password</label>
+                    <label className="text-xs font-medium text-slate-600">Password</label>
                     {!isSignup && (
                       <button
                         type="button"
@@ -315,21 +313,21 @@ export default function LoginView() {
                           setError(null);
                           setSuccess(null);
                         }}
-                        className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                        className="text-xs text-indigo-600 hover:text-indigo-800 transition-colors"
                       >
                         Forgot password?
                       </button>
                     )}
                   </div>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input
                       type="password"
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:ring-1 focus:ring-indigo-500 focus:outline-none focus:border-indigo-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -338,7 +336,7 @@ export default function LoginView() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 hover:from-indigo-600 hover:to-purple-600 text-white font-medium py-3 rounded-xl shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 text-sm transition-all duration-200 disabled:opacity-50"
+                className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm transition-all duration-200 disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -369,32 +367,32 @@ export default function LoginView() {
               
               {!confirmationResult ? (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-zinc-300">Registered Phone Number</label>
+                  <label className="text-xs font-medium text-slate-700">Registered Phone Number</label>
                   <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="tel"
                       required
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="+919876543210"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors"
                     />
                   </div>
-                  <p className="text-[10px] text-zinc-500 pt-1">Include country code (e.g. +91)</p>
+                  <p className="text-[10px] text-slate-500 pt-1">Include country code (e.g. +91)</p>
                 </div>
               ) : (
-                <div className="space-y-1.5 animate-fadeIn">
-                  <label className="text-xs font-medium text-zinc-300">Enter OTP</label>
+                <div className="space-y-1.5 animate-fade-in">
+                  <label className="text-xs font-medium text-slate-700">Enter OTP</label>
                   <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
                       type="text"
                       required
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
                       placeholder="123456"
-                      className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm tracking-widest text-white placeholder-zinc-500 focus:outline-none focus:border-purple-500 transition-colors"
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-sm tracking-widest text-slate-900 placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors"
                     />
                   </div>
                 </div>
@@ -403,7 +401,7 @@ export default function LoginView() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-medium py-3 rounded-xl shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 text-sm transition-all duration-200 disabled:opacity-50"
+                className="w-full mt-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl shadow-sm flex items-center justify-center gap-2 text-sm transition-all duration-200 disabled:opacity-50"
               >
                 {loading ? (
                   <>
@@ -432,7 +430,7 @@ export default function LoginView() {
                     setSuccess(null);
                     setError(null);
                   }}
-                  className="w-full text-xs text-zinc-400 hover:text-white transition-colors"
+                  className="w-full text-xs text-slate-500 hover:text-slate-700 transition-colors"
                 >
                   Change phone number
                 </button>
@@ -442,7 +440,7 @@ export default function LoginView() {
 
           {/* Toggle between Sign In / Sign Up / Forgot Password (Admin only) */}
           {activeTab === "admin" && (
-            <div className="mt-6 pt-6 border-t border-white/10 text-center text-xs text-zinc-400">
+            <div className="mt-6 pt-6 border-t border-slate-100 text-center text-xs text-slate-500">
               {isForgotPassword ? (
                 <button
                   type="button"
@@ -451,7 +449,7 @@ export default function LoginView() {
                     setError(null);
                     setSuccess(null);
                   }}
-                  className="text-indigo-400 hover:text-indigo-300 font-medium"
+                  className="text-indigo-600 hover:text-indigo-700 font-medium"
                 >
                   ← Back to Sign In
                 </button>
@@ -465,7 +463,7 @@ export default function LoginView() {
                       setError(null);
                       setSuccess(null);
                     }}
-                    className="text-indigo-400 hover:text-indigo-300 font-medium ml-1"
+                    className="text-indigo-600 hover:text-indigo-700 font-medium ml-1"
                   >
                     Sign In
                   </button>
@@ -480,7 +478,7 @@ export default function LoginView() {
                       setError(null);
                       setSuccess(null);
                     }}
-                    className="text-indigo-400 hover:text-indigo-300 font-medium ml-1"
+                    className="text-indigo-600 hover:text-indigo-700 font-medium ml-1"
                   >
                     Create Admin Account
                   </button>
@@ -490,9 +488,16 @@ export default function LoginView() {
           )}
         </div>
 
+        <a
+          href="/"
+          className="mt-6 flex items-center justify-center gap-1.5 w-full py-3 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition-colors"
+        >
+          <Building2 className="w-4 h-4" /> Looking for a PG? Browse our properties
+        </a>
+
         {/* Footer info */}
-        <p className="text-center text-xs text-zinc-500 mt-6">
-          © {new Date().getFullYear()} Serenity Stayz PG Operations • Production v2.0
+        <p className="text-center text-xs text-slate-400 mt-6">
+          © {new Date().getFullYear()} Study Point Group
         </p>
       </div>
     </div>

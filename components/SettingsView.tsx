@@ -80,35 +80,35 @@ service cloud.firestore {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-8 animate-fade-in bg-slate-50 min-h-full">
       {/* Header */}
       <div>
-        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           System Configuration
         </h2>
-        <p className="text-slate-400 text-sm mt-1">
+        <p className="text-slate-500 text-sm mt-1">
           Configure connection endpoints, review Firestore schema and secure firestore rules.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
         {/* Connection Setup */}
-        <div className="glass-card p-6 rounded-2xl lg:col-span-2 space-y-6">
-          <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-2">
-            <Database className="w-5 h-5 text-indigo-400" />
+        <div className="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl xl:col-span-2 space-y-6">
+          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+            <Database className="w-5 h-5 text-indigo-600" />
             Backend Connection Manager
           </h3>
 
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-slate-400 block mb-2">Select Active Database</label>
-              <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-1.5 flex max-w-sm">
+              <label className="text-xs font-bold text-slate-500 block mb-2">Select Active Database</label>
+              <div className="bg-slate-100 border border-slate-200 rounded-xl p-1.5 flex max-w-sm">
                 <button
                   onClick={() => onToggleDbMode("firebase")}
                   className={`flex-1 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
                     isFirebase
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                      : "text-slate-400 hover:text-slate-205"
+                      ? "bg-white text-indigo-700 shadow-sm border border-slate-200"
+                      : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
                   Live Firebase SDK
@@ -117,8 +117,8 @@ service cloud.firestore {
                   onClick={() => onToggleDbMode("mock")}
                   className={`flex-1 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
                     !isFirebase
-                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/10"
-                      : "text-slate-400 hover:text-slate-205"
+                      ? "bg-white text-indigo-700 shadow-sm border border-slate-200"
+                      : "text-slate-500 hover:text-slate-700"
                   }`}
                 >
                   Mock LocalStorage
@@ -128,47 +128,47 @@ service cloud.firestore {
 
             {/* Config Fields */}
             {isFirebase && (
-              <form onSubmit={handleSaveConfig} className="space-y-4 border-t border-slate-800/80 pt-4 animate-fade-in">
-                <div className="flex items-center gap-2 text-xs text-emerald-450 bg-emerald-500/5 border border-emerald-500/10 p-3 rounded-xl">
+              <form onSubmit={handleSaveConfig} className="space-y-4 border-t border-slate-100 pt-4 animate-fade-in">
+                <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
                   <CloudCheck className="w-4 h-4 shrink-0" />
-                  <p>Connected to Firebase application serenity-stayz. Configured with user credentials.</p>
+                  <p>Connected to Firebase application studypoint-group. Configured with user credentials.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400">Firebase API Key</label>
+                    <label className="text-xs font-semibold text-slate-700">Firebase API Key</label>
                     <input
                       type="text"
                       value={config.apiKey}
                       onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-                      className="w-full p-2.5 rounded-xl text-xs glass-input font-mono"
+                      className="w-full p-2.5 rounded-xl text-xs border border-slate-200 bg-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400">Project ID</label>
+                    <label className="text-xs font-semibold text-slate-700">Project ID</label>
                     <input
                       type="text"
                       value={config.projectId}
                       onChange={(e) => setConfig({ ...config, projectId: e.target.value })}
-                      className="w-full p-2.5 rounded-xl text-xs glass-input font-mono"
+                      className="w-full p-2.5 rounded-xl text-xs border border-slate-200 bg-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400">Auth Domain</label>
+                    <label className="text-xs font-semibold text-slate-700">Auth Domain</label>
                     <input
                       type="text"
                       value={config.authDomain}
                       onChange={(e) => setConfig({ ...config, authDomain: e.target.value })}
-                      className="w-full p-2.5 rounded-xl text-xs glass-input font-mono"
+                      className="w-full p-2.5 rounded-xl text-xs border border-slate-200 bg-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-400">App ID</label>
+                    <label className="text-xs font-semibold text-slate-700">App ID</label>
                     <input
                       type="text"
                       value={config.appId}
                       onChange={(e) => setConfig({ ...config, appId: e.target.value })}
-                      className="w-full p-2.5 rounded-xl text-xs glass-input font-mono"
+                      className="w-full p-2.5 rounded-xl text-xs border border-slate-200 bg-white font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -178,7 +178,7 @@ service cloud.firestore {
                     type="button"
                     disabled={seeding}
                     onClick={triggerSeed}
-                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-amber-400 border border-amber-500/20 hover:border-amber-500/40 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
+                    className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-semibold transition-all flex items-center gap-2"
                   >
                     <RefreshCw className={`w-3.5 h-3.5 ${seeding ? "animate-spin" : ""}`} />
                     {seeding ? "Seeding..." : "Seed Demo Sample Data"}
@@ -187,7 +187,7 @@ service cloud.firestore {
                   
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-lg shadow-indigo-600/20"
+                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm"
                   >
                     Save Changes & Reload
                   </button>
@@ -196,8 +196,8 @@ service cloud.firestore {
             )}
 
             {!isFirebase && (
-              <div className="space-y-4 border-t border-slate-800/80 pt-4 animate-fade-in">
-                <div className="flex items-start gap-3 text-xs text-amber-500 bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl">
+              <div className="space-y-4 border-t border-slate-100 pt-4 animate-fade-in">
+                <div className="flex items-start gap-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 p-4 rounded-xl">
                   <Info className="w-5 h-5 shrink-0" />
                   <p className="leading-relaxed">
                     You are in Mock Mode. All edits are stored inside this browser's LocalStorage. To inspect live changes across devices or save persistently, enable the Live Firebase SDK mode.
@@ -209,13 +209,13 @@ service cloud.firestore {
         </div>
 
         {/* Danger Zone: Factory Reset (Universal across Firebase & Mock) */}
-        <div className="glass-card p-6 rounded-2xl lg:col-span-2 border border-rose-500/20 bg-rose-500/[0.02] space-y-4">
-          <div className="flex items-center gap-2 text-rose-400 border-b border-rose-500/20 pb-3">
+        <div className="bg-white p-6 rounded-2xl xl:col-span-2 border border-rose-200 space-y-4">
+          <div className="flex items-center gap-2 text-rose-600 border-b border-rose-100 pb-3">
             <AlertTriangle className="w-5 h-5" />
-            <h3 className="text-base font-bold text-white">Danger Zone: Data Wipe & Factory Reset</h3>
+            <h3 className="text-base font-bold text-slate-900">Danger Zone: Data Wipe & Factory Reset</h3>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Need a clean slate? This option will permanently erase <strong className="text-rose-300">ALL rooms, beds, tenants, rent/electricity bills, and security logs</strong> from your active database ({isFirebase ? "Live Firebase Firestore" : "Browser LocalStorage"}), setting the portal to zero data.
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Need a clean slate? This option will permanently erase <strong className="text-rose-600">ALL rooms, beds, tenants, rent/electricity bills, and security logs</strong> from your active database ({isFirebase ? "Live Firebase Firestore" : "Browser LocalStorage"}), setting the portal to zero data.
           </p>
           <div className="pt-2 flex flex-wrap items-center gap-4">
             <button
@@ -230,7 +230,7 @@ service cloud.firestore {
                   }
                 }
               }}
-              className="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-rose-600/20"
+              className="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-sm"
             >
               <Trash2 className="w-4 h-4" />
               Clear All Data (Factory Reset)
@@ -243,26 +243,26 @@ service cloud.firestore {
 
         {/* Security Rules & Schema info */}
 
-        <div className="glass-card p-6 rounded-2xl flex flex-col justify-between">
+        <div className="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl flex flex-col justify-between">
           <div className="space-y-6">
-            <h3 className="text-base font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-2">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
               <ShieldAlert className="w-5 h-5 text-amber-500" />
               Recommended Security Rules
             </h3>
 
-            <p className="text-xs text-slate-400 leading-relaxed">
+            <p className="text-xs text-slate-500 leading-relaxed">
               When launching a live database in Firebase Console, paste this snippet inside your Firestore Rules tab to allow read/write permissions for rooms, tenants, billing and logs.
             </p>
 
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 relative group">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 relative group">
               <button
                 onClick={copyRules}
-                className="absolute top-2.5 right-2.5 p-1.5 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white rounded-lg transition-all"
+                className="absolute top-2.5 right-2.5 p-1.5 bg-white border border-slate-200 text-slate-500 hover:text-slate-900 rounded-lg transition-all shadow-sm"
                 title="Copy rules code"
               >
-                {copiedRule ? <CheckCircle className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                {copiedRule ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
               </button>
-              <pre className="text-[10px] text-indigo-300 font-mono overflow-x-auto leading-relaxed max-h-52 select-all">
+              <pre className="text-[10px] text-slate-700 font-mono overflow-x-auto leading-relaxed max-h-52 select-all">
 {`rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {

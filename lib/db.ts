@@ -1,4 +1,5 @@
 import { db } from "./firebase";
+import { buildDemoListings, DEMO_LISTING_IDS } from "./demoListings";
 import { 
   collection, 
   doc, 
@@ -52,9 +53,13 @@ export interface Tenant {
   bedId: string;
   checkInDate: string;
   checkOutDate: string | null;
+  noticeDate?: string | null;
+  expectedMoveOutDate?: string | null;
+  depositRefunded?: number | null;
+  settlementNotes?: string | null;
   rentAmount: number;
   securityDeposit: number;
-  status: "active" | "checked_out";
+  status: "active" | "checked_out" | "notice_period";
 }
 
 export interface BillingRecord {
@@ -154,11 +159,57 @@ export interface Expense {
   description: string;
 }
 
+export type SharingType = "Single" | "Double" | "Triple" | "Four Sharing";
+
+export interface ListingPricing {
+  sharing: SharingType;
+  price: number;          // monthly rent per bed
+  bedsAvailable: number;  // beds currently open for booking
+}
+
+// Public PG catalogue / showcase entry (one per property, doc id = propertyId)
+export interface PGListing {
+  id: string;
+  propertyId: string;
+  published: boolean;
+  isDemo?: boolean;       // sample listing, shown with a "Demo" badge
+  title: string;
+  tagline?: string;
+  description: string;
+  gender: "boys" | "girls" | "co-living";
+  address: string;
+  locality?: string;
+  city: string;
+  mapQuery?: string;      // "lat,lng", place name or address used for Google Maps
+  phone: string;
+  whatsapp: string;
+  images: string[];
+  videos: string[];       // YouTube links or uploaded video URLs
+  amenities: string[];
+  pricing: ListingPricing[];
+  securityDeposit?: number;
+  foodIncluded?: boolean;
+  houseRules?: string;
+  updatedAt: string;
+}
+
+export interface Enquiry {
+  id: string;
+  propertyId: string;
+  name: string;
+  phone: string;
+  message?: string;
+  preferredSharing?: string;
+  moveInDate?: string;
+  status: "new" | "contacted" | "closed";
+  createdAt: string;
+}
+
 // Seed Data
 const SEED_PROPERTIES: Property[] = [
   {
     id: "prop-1",
-    name: "Serenity Stayz",
+    name: "Study Point Group",
     adminId: "admin",
     address: "123 PG Street, Tech City",
     createdAt: "2026-01-01T00:00:00Z"
@@ -802,6 +853,15 @@ export const dbService = {
     }
   },
 
+  deleteRoom: async (roomId: string): Promise<void> => {
+    if (isFirebaseMode()) {
+      await deleteDoc(doc(db, "rooms", roomId));
+    } else {
+      const rooms = getLocalData<Room>("pg_mock_rooms", SEED_ROOMS);
+      setLocalData("pg_mock_rooms", rooms.filter((r) => r.id !== roomId));
+    }
+  },
+
   // -------------------------------------------------------------
   // TENANTS API
   // -------------------------------------------------------------
@@ -890,7 +950,15 @@ export const dbService = {
     }
   },
 
-  checkoutTenant: async (tenantId: string): Promise<void> => {
+  checkoutTenant: async (
+    tenantId: string,
+    settlement?: {
+      checkOutDate?: string;
+      depositRefunded?: number;
+      settlementNotes?: string;
+    }
+  ): Promise<void> => {
+    const today = settlement?.checkOutDate || new Date().toISOString().split("T")[0];
     if (isFirebaseMode()) {
       const tenantDoc = await getDoc(doc(db, "tenants", tenantId));
       if (tenantDoc.exists()) {
@@ -899,7 +967,9 @@ export const dbService = {
         const updatedTenant = {
           ...t,
           status: "checked_out" as const,
-          checkOutDate: new Date().toISOString().split("T")[0]
+          checkOutDate: today,
+          depositRefunded: settlement?.depositRefunded ?? t.securityDeposit,
+          settlementNotes: settlement?.settlementNotes || null
         };
         await setDoc(doc(db, "tenants", tenantId), updatedTenant);
 
@@ -922,7 +992,9 @@ export const dbService = {
       if (tenantIndex !== -1) {
         const t = tenants[tenantIndex];
         t.status = "checked_out";
-        t.checkOutDate = new Date().toISOString().split("T")[0];
+        t.checkOutDate = today;
+        t.depositRefunded = settlement?.depositRefunded ?? t.securityDeposit;
+        t.settlementNotes = settlement?.settlementNotes || null;
         setLocalData("pg_mock_tenants", tenants);
 
         const rooms = getLocalData<Room>("pg_mock_rooms", SEED_ROOMS);
@@ -937,6 +1009,64 @@ export const dbService = {
           setLocalData("pg_mock_rooms", rooms);
         }
       }
+    }
+  },
+
+  updateTenant: async (tenantId: string, updatedTenant: Partial<Tenant>): Promise<void> => {
+    if (isFirebaseMode()) {
+      const tenantDoc = await getDoc(doc(db, "tenants", tenantId));
+      if (tenantDoc.exists()) {
+        const current = tenantDoc.data() as Tenant;
+        await setDoc(doc(db, "tenants", tenantId), { ...current, ...updatedTenant });
+      }
+    } else {
+      const tenants = getLocalData<Tenant>("pg_mock_tenants", SEED_TENANTS);
+      const index = tenants.findIndex((t) => t.id === tenantId);
+      if (index !== -1) {
+        tenants[index] = { ...tenants[index], ...updatedTenant };
+        setLocalData("pg_mock_tenants", tenants);
+      }
+    }
+  },
+
+  deleteTenant: async (tenantId: string): Promise<void> => {
+    if (isFirebaseMode()) {
+      const tenantDoc = await getDoc(doc(db, "tenants", tenantId));
+      if (tenantDoc.exists()) {
+        const t = tenantDoc.data() as Tenant;
+        // Free bed if active
+        if (t.status !== "checked_out") {
+          const roomDoc = await getDoc(doc(db, "rooms", t.roomId));
+          if (roomDoc.exists()) {
+            const room = roomDoc.data() as Room;
+            const updatedBeds = room.beds.map((b) => {
+              if (b.tenantId === tenantId) {
+                return { ...b, status: "available" as const, tenantId: null };
+              }
+              return b;
+            });
+            await setDoc(doc(db, "rooms", t.roomId), { ...room, beds: updatedBeds });
+          }
+        }
+        await deleteDoc(doc(db, "tenants", tenantId));
+      }
+    } else {
+      const tenants = getLocalData<Tenant>("pg_mock_tenants", SEED_TENANTS);
+      const t = tenants.find((item) => item.id === tenantId);
+      if (t && t.status !== "checked_out") {
+        const rooms = getLocalData<Room>("pg_mock_rooms", SEED_ROOMS);
+        const roomIndex = rooms.findIndex((r) => r.id === t.roomId);
+        if (roomIndex !== -1) {
+          rooms[roomIndex].beds = rooms[roomIndex].beds.map((b) => {
+            if (b.tenantId === tenantId) {
+              return { ...b, status: "available" as const, tenantId: null };
+            }
+            return b;
+          });
+          setLocalData("pg_mock_rooms", rooms);
+        }
+      }
+      setLocalData("pg_mock_tenants", tenants.filter((item) => item.id !== tenantId));
     }
   },
 
@@ -1343,13 +1473,138 @@ export const dbService = {
     }
   },
 
+  // -------------------------------------------------------------
+  // PG CATALOGUE (public listings + enquiries)
+  // -------------------------------------------------------------
+  getListings: async (): Promise<PGListing[]> => {
+    if (isFirebaseMode()) {
+      try {
+        const snap = await getDocs(collection(db, "listings"));
+        return snap.docs.map((d) => d.data() as PGListing);
+      } catch (err) {
+        console.error("Firebase Error in getListings:", err);
+        return [];
+      }
+    }
+    return getLocalData<PGListing>("pg_mock_listings", buildDemoListings(""));
+  },
+
+  getPublishedListings: async (): Promise<PGListing[]> => {
+    if (isFirebaseMode()) {
+      try {
+        const q = query(collection(db, "listings"), where("published", "==", true));
+        const snap = await getDocs(q);
+        return snap.docs.map((d) => d.data() as PGListing);
+      } catch (err) {
+        console.error("Firebase Error in getPublishedListings:", err);
+        return [];
+      }
+    }
+    return getLocalData<PGListing>("pg_mock_listings", buildDemoListings("")).filter((l) => l.published);
+  },
+
+  getListing: async (propertyId: string): Promise<PGListing | null> => {
+    if (isFirebaseMode()) {
+      try {
+        const snap = await getDoc(doc(db, "listings", propertyId));
+        return snap.exists() ? (snap.data() as PGListing) : null;
+      } catch (err) {
+        console.error("Firebase Error in getListing:", err);
+        return null;
+      }
+    }
+    return getLocalData<PGListing>("pg_mock_listings", buildDemoListings("")).find((l) => l.id === propertyId) || null;
+  },
+
+  saveListing: async (listing: PGListing): Promise<void> => {
+    if (isFirebaseMode()) {
+      await setDoc(doc(db, "listings", listing.id), listing);
+    } else {
+      const listings = getLocalData<PGListing>("pg_mock_listings", buildDemoListings(""));
+      const index = listings.findIndex((l) => l.id === listing.id);
+      if (index === -1) listings.push(listing);
+      else listings[index] = listing;
+      setLocalData("pg_mock_listings", listings);
+    }
+  },
+
+  addDemoListings: async (phone: string): Promise<void> => {
+    const demos = buildDemoListings(phone);
+    if (isFirebaseMode()) {
+      await Promise.all(demos.map((l) => setDoc(doc(db, "listings", l.id), l)));
+    } else {
+      const others = getLocalData<PGListing>("pg_mock_listings", []).filter((l) => !l.isDemo);
+      setLocalData("pg_mock_listings", [...others, ...demos]);
+    }
+  },
+
+  removeDemoListings: async (): Promise<void> => {
+    if (isFirebaseMode()) {
+      await Promise.all(DEMO_LISTING_IDS.map((id) => deleteDoc(doc(db, "listings", id))));
+    } else {
+      const remaining = getLocalData<PGListing>("pg_mock_listings", []).filter((l) => !l.isDemo);
+      setLocalData("pg_mock_listings", remaining);
+    }
+  },
+
+  getEnquiries: async (propertyId: string): Promise<Enquiry[]> => {
+    if (isFirebaseMode()) {
+      try {
+        const q = query(collection(db, "enquiries"), where("propertyId", "==", propertyId));
+        const snap = await getDocs(q);
+        return snap.docs
+          .map((d) => d.data() as Enquiry)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      } catch (err) {
+        console.error("Firebase Error in getEnquiries:", err);
+        return [];
+      }
+    }
+    return getLocalData<Enquiry>("pg_mock_enquiries", [])
+      .filter((e) => e.propertyId === propertyId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  },
+
+  addEnquiry: async (enquiry: Enquiry): Promise<void> => {
+    if (isFirebaseMode()) {
+      await setDoc(doc(db, "enquiries", enquiry.id), enquiry);
+    } else {
+      const enquiries = getLocalData<Enquiry>("pg_mock_enquiries", []);
+      enquiries.push(enquiry);
+      setLocalData("pg_mock_enquiries", enquiries);
+    }
+  },
+
+  updateEnquiryStatus: async (enquiryId: string, status: Enquiry["status"]): Promise<void> => {
+    if (isFirebaseMode()) {
+      await updateDoc(doc(db, "enquiries", enquiryId), { status });
+    } else {
+      const enquiries = getLocalData<Enquiry>("pg_mock_enquiries", []);
+      const index = enquiries.findIndex((e) => e.id === enquiryId);
+      if (index !== -1) {
+        enquiries[index].status = status;
+        setLocalData("pg_mock_enquiries", enquiries);
+      }
+    }
+  },
+
+  deleteEnquiry: async (enquiryId: string): Promise<void> => {
+    if (isFirebaseMode()) {
+      await deleteDoc(doc(db, "enquiries", enquiryId));
+    } else {
+      const enquiries = getLocalData<Enquiry>("pg_mock_enquiries", []).filter((e) => e.id !== enquiryId);
+      setLocalData("pg_mock_enquiries", enquiries);
+    }
+  },
+
   factoryResetAllData: async (): Promise<void> => {
     if (isFirebaseMode()) {
       try {
         const collections = [
           "properties", "rooms", "tenants", "billing", 
           "securityLogs", "assets", "fines", "staff", 
-          "staffAttendance", "staffAdvances", "expenses"
+          "staffAttendance", "staffAdvances", "expenses",
+          "listings", "enquiries"
         ];
         for (const colName of collections) {
           const snap = await getDocs(collection(db, colName));
@@ -1375,6 +1630,8 @@ export const dbService = {
       localStorage.setItem("pg_mock_attendance", JSON.stringify([]));
       localStorage.setItem("pg_mock_advances", JSON.stringify([]));
       localStorage.setItem("pg_mock_expenses", JSON.stringify([]));
+      localStorage.setItem("pg_mock_listings", JSON.stringify([]));
+      localStorage.setItem("pg_mock_enquiries", JSON.stringify([]));
     }
   }
 };

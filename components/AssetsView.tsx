@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Asset, Room } from "../lib/db";
 
+import ModalOverlay from "./ui/ModalOverlay";
 interface AssetsViewProps {
   assets: Asset[];
   rooms: Room[];
@@ -141,35 +142,35 @@ export default function AssetsView({
       {/* Header & Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
             Assets & Inventory
           </h2>
-          <p className="text-slate-400 text-sm">
+          <p className="text-slate-500 text-sm">
             Manage property-wide appliances and room-specific furniture.
           </p>
         </div>
         
         <div className="flex gap-4">
-          <div className="glass-card-no-hover p-4 rounded-2xl flex-1 border border-indigo-500/20 bg-indigo-500/5 flex flex-col justify-center">
-            <p className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Total Value</p>
-            <p className="text-2xl font-extrabold text-white">₹{totalValue.toLocaleString()}</p>
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm p-4 rounded-2xl flex-1 border border-indigo-200 bg-indigo-500/5 flex flex-col justify-center">
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Total Value</p>
+            <p className="text-2xl font-extrabold text-slate-900">₹{totalValue.toLocaleString()}</p>
           </div>
-          <div className="glass-card-no-hover p-4 rounded-2xl flex-1 border border-rose-500/20 bg-rose-500/5 flex flex-col justify-center">
-            <p className="text-xs font-bold text-rose-400 uppercase tracking-wider mb-1">Needs Repair</p>
-            <p className="text-2xl font-extrabold text-white">{needsRepairCount}</p>
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm p-4 rounded-2xl flex-1 border border-rose-200 bg-rose-500/5 flex flex-col justify-center">
+            <p className="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Needs Repair</p>
+            <p className="text-2xl font-extrabold text-slate-900">{needsRepairCount}</p>
           </div>
         </div>
       </div>
 
       {/* Tabs & Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-900/50 p-2 rounded-2xl border border-slate-800/60">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-100 p-2 rounded-2xl border border-slate-200/60">
         <div className="flex gap-2 w-full sm:w-auto">
           <button
             onClick={() => setActiveTab("property")}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeTab === "property" 
-                ? "bg-slate-800 text-white shadow-md" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                ? "bg-slate-100 text-slate-900 shadow-md" 
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
             }`}
           >
             <Building2 className="w-4 h-4" />
@@ -179,8 +180,8 @@ export default function AssetsView({
             onClick={() => setActiveTab("room")}
             className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               activeTab === "room" 
-                ? "bg-slate-800 text-white shadow-md" 
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                ? "bg-slate-100 text-slate-900 shadow-md" 
+                : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
             }`}
           >
             <Home className="w-4 h-4" />
@@ -190,7 +191,7 @@ export default function AssetsView({
 
         <button
           onClick={openAddModal}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/20"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm"
         >
           <Plus className="w-4 h-4" />
           Add Asset
@@ -199,17 +200,17 @@ export default function AssetsView({
 
       {/* Asset Grid */}
       {filteredAssets.length === 0 ? (
-        <div className="glass-card p-12 text-center text-slate-500 rounded-2xl flex flex-col items-center justify-center gap-3">
+        <div className="bg-white border border-slate-200 shadow-sm p-12 text-center text-slate-500 rounded-2xl flex flex-col items-center justify-center gap-3">
           <Archive className="w-12 h-12 text-slate-700" />
           <p>No assets found in this category.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
           {filteredAssets.map(asset => (
             <div 
               key={asset.id} 
               onClick={() => openEditModal(asset)}
-              className="glass-card border border-slate-800/60 rounded-2xl p-5 cursor-pointer hover:border-indigo-500/30 transition-all group relative overflow-hidden"
+              className="bg-white border border-slate-200 shadow-sm rounded-2xl p-5 cursor-pointer hover:border-indigo-200 transition-all group relative overflow-hidden"
             >
               {/* Status Indicator */}
               <div className={`absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rounded-full blur-2xl opacity-20 transition-opacity group-hover:opacity-40 ${
@@ -219,41 +220,41 @@ export default function AssetsView({
 
               <div className="flex items-start gap-4 mb-4 relative z-10">
                 <div className={`p-3 rounded-xl ${
-                  asset.category === "electronics" ? "bg-blue-500/10 text-blue-400" :
-                  asset.category === "furniture" ? "bg-amber-500/10 text-amber-400" :
-                  asset.category === "appliance" ? "bg-purple-500/10 text-purple-400" :
-                  "bg-slate-500/10 text-slate-400"
+                  asset.category === "electronics" ? "bg-blue-50 text-blue-600" :
+                  asset.category === "furniture" ? "bg-amber-50 text-amber-600" :
+                  asset.category === "appliance" ? "bg-purple-500/10 text-purple-600" :
+                  "bg-slate-100 text-slate-500"
                 }`}>
                   {getCategoryIcon(asset.category)}
                 </div>
                 <div className="flex-1 min-w-0 pt-1">
-                  <h4 className="font-bold text-white truncate">{asset.name}</h4>
-                  <p className="text-xs text-slate-400 capitalize">{asset.category} • Qty: {asset.quantity}</p>
+                  <h4 className="font-bold text-slate-900 truncate">{asset.name}</h4>
+                  <p className="text-xs text-slate-500 capitalize">{asset.category} • Qty: {asset.quantity}</p>
                 </div>
               </div>
 
               <div className="space-y-3 relative z-10">
-                <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/50 border border-slate-800">
-                  <span className="text-slate-400 flex items-center gap-1.5">
+                <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 border border-slate-200">
+                  <span className="text-slate-500 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5" /> Location
                   </span>
-                  <span className="font-semibold text-slate-200">{getRoomName(asset.assignedRoomId)}</span>
+                  <span className="font-semibold text-slate-900">{getRoomName(asset.assignedRoomId)}</span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/50 border border-slate-800">
-                  <span className="text-slate-400 flex items-center gap-1.5">
+                <div className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50 border border-slate-200">
+                  <span className="text-slate-500 flex items-center gap-1.5">
                     <IndianRupee className="w-3.5 h-3.5" /> Value
                   </span>
-                  <span className="font-semibold text-emerald-400">
+                  <span className="font-semibold text-emerald-600">
                     {asset.cost ? `₹${asset.cost.toLocaleString()}` : "N/A"}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-800/50">
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border ${
-                    asset.status === "working" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-                    asset.status === "needs_repair" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                    "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                    asset.status === "working" ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+                    asset.status === "needs_repair" ? "bg-amber-50 text-amber-600 border-amber-200" :
+                    "bg-rose-50 text-rose-600 border-rose-200"
                   }`}>
                     {asset.status.replace("_", " ")}
                   </span>
@@ -272,23 +273,23 @@ export default function AssetsView({
 
       {/* Add / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <ModalOverlay tone="bg-slate-900/50" onClose={() => setShowModal(false)}>
           <form 
             onSubmit={handleSubmit}
-            className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-lg animate-fade-in relative shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar"
+            className="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-lg animate-fade-in relative shadow-xl max-h-[90vh] overflow-y-auto custom-scrollbar"
           >
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                  <Archive className="w-5 h-5 text-indigo-400" />
+                <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <Archive className="w-5 h-5 text-indigo-600" />
                   {editingAsset ? "Edit Asset" : "Add New Asset"}
                 </h3>
-                <p className="text-slate-400 text-xs mt-1">Fill out the details to register inventory items.</p>
+                <p className="text-slate-500 text-xs mt-1">Fill out the details to register inventory items.</p>
               </div>
               <button 
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="text-slate-500 hover:text-white"
+                className="text-slate-500 hover:text-slate-900"
               >
                 ✕
               </button>
@@ -297,23 +298,23 @@ export default function AssetsView({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Asset Name *</label>
+                  <label className="text-xs font-bold text-slate-500">Asset Name *</label>
                   <input
                     required
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Voltas 1.5 Ton AC"
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Category *</label>
+                  <label className="text-xs font-bold text-slate-500">Category *</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   >
                     <option value="electronics">Electronics</option>
                     <option value="furniture">Furniture</option>
@@ -323,23 +324,23 @@ export default function AssetsView({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Quantity *</label>
+                  <label className="text-xs font-bold text-slate-500">Quantity *</label>
                   <input
                     required
                     type="number"
                     min="1"
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Status *</label>
+                  <label className="text-xs font-bold text-slate-500">Status *</label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   >
                     <option value="working">Working</option>
                     <option value="needs_repair">Needs Repair</option>
@@ -348,14 +349,14 @@ export default function AssetsView({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Assignment Level *</label>
+                  <label className="text-xs font-bold text-slate-500">Assignment Level *</label>
                   <select
                     value={assignmentType}
                     onChange={(e) => {
                       setAssignmentType(e.target.value as any);
                       if (e.target.value === "property") setAssignedRoomId("");
                     }}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   >
                     <option value="property">Property-Wide</option>
                     <option value="room">Assigned to Room</option>
@@ -364,12 +365,12 @@ export default function AssetsView({
 
                 {assignmentType === "room" && (
                   <div className="col-span-2 space-y-1.5">
-                    <label className="text-xs font-bold text-slate-400">Assign to Room *</label>
+                    <label className="text-xs font-bold text-slate-500">Assign to Room *</label>
                     <select
                       required={assignmentType === "room"}
                       value={assignedRoomId}
                       onChange={(e) => setAssignedRoomId(e.target.value)}
-                      className="w-full p-2.5 rounded-xl text-sm glass-input"
+                      className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                     >
                       <option value="">-- Select Room --</option>
                       {rooms.map(r => (
@@ -380,45 +381,45 @@ export default function AssetsView({
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Purchase Date</label>
+                  <label className="text-xs font-bold text-slate-500">Purchase Date</label>
                   <input
                     type="date"
                     value={purchaseDate}
                     onChange={(e) => setPurchaseDate(e.target.value)}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Cost (₹)</label>
+                  <label className="text-xs font-bold text-slate-500">Cost (₹)</label>
                   <input
                     type="number"
                     min="0"
                     value={cost}
                     onChange={(e) => setCost(e.target.value)}
-                    className="w-full p-2.5 rounded-xl text-sm glass-input"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors"
                   />
                 </div>
 
                 <div className="col-span-2 space-y-1.5">
-                  <label className="text-xs font-bold text-slate-400">Additional Notes</label>
+                  <label className="text-xs font-bold text-slate-500">Additional Notes</label>
                   <textarea
                     rows={2}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="E.g. Serial number, warranty info, etc."
-                    className="w-full p-2.5 rounded-xl text-sm glass-input resize-none"
+                    className="w-full p-2.5 rounded-xl text-sm bg-white border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-colors resize-none"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-6 mt-6 border-t border-slate-800">
+            <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200">
               {editingAsset && (
                 <button
                   type="button"
                   onClick={() => handleDelete(editingAsset.id)}
-                  className="px-4 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-450 border border-rose-500/20 rounded-xl text-sm font-semibold transition-all mr-auto"
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100/20 text-rose-600 border border-rose-200 rounded-xl text-sm font-semibold transition-all mr-auto"
                 >
                   Delete Asset
                 </button>
@@ -426,19 +427,19 @@ export default function AssetsView({
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-sm font-semibold transition-all"
+                className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-sm font-semibold transition-all"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-600/20"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm"
               >
                 {editingAsset ? "Save Changes" : "Register Asset"}
               </button>
             </div>
           </form>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );
